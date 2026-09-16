@@ -1,19 +1,67 @@
 // @ts-check
-import { test, expect } from '@playwright/test';
+const { test, expect } = require('@playwright/test');
+const { SwagLoginPage } = require("../pages/swag-login-page")
+import { describe } from "node:test";
 
-test('has title', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+describe("Login page tests", () => {
+  test('logs in with correct user and password', async ({ page }) => {
+    const form = new SwagLoginPage(page)
+    await form.goto()
 
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Playwright/);
-});
+    await form.fillRequiredFields({
+      username: "standard_user",
+      password: "secret_sauce"
+    })
 
-test('get started link', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+    await form.submit()
+    await form.expectSuccess()
+  });
 
-  // Click the get started link.
-  await page.getByRole('link', { name: 'Get started' }).click();
+  test("doesn't log in with incorrect username", async ({ page }) => {
+    const form = new SwagLoginPage(page)
+    await form.goto()
 
-  // Expects page to have a heading with the name of Installation.
-  await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
-});
+    await form.fillRequiredFields({
+      username: "standard_use",
+      password: "secret_sauce"
+    })
+
+    await form.submit()
+    await form.expectFailure()
+  });
+
+  test("doesn't log in with incorrect password", async ({ page }) => {
+    const form = new SwagLoginPage(page)
+    await form.goto()
+
+    await form.fillRequiredFields({
+      username: "standard_user",
+      password: "aaaaaaaaa"
+    })
+
+    await form.submit()
+    await form.expectFailure()
+  });
+
+  test("doesn't log in with no inputs", async ({ page }) => {
+    const form = new SwagLoginPage(page)
+    await form.goto()
+
+    await form.submit()
+    await form.expectFailure()
+  });
+
+  test("doesn't let in locked_out_user", async ({ page }) => {
+    const form = new SwagLoginPage(page)
+    await form.goto()
+
+    await form.fillRequiredFields({
+      username: "locked_out_user",
+      password: "secret_sauce"
+    })
+
+    await form.submit()
+    await form.expectFailure()
+  });
+
+})
